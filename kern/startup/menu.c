@@ -520,6 +520,11 @@ cmd_mainmenu(int n, char **a)
 	return 0;
 }
 
+static int cmd_dth() {
+	dbflags = DB_THREADS;
+	return 0;
+}
+
 ////////////////////////////////////////
 //
 // Command table.
@@ -549,6 +554,7 @@ static struct {
 	{ "q",		cmd_quit },
 	{ "exit",	cmd_quit },
 	{ "halt",	cmd_quit },
+	{ "dth",    cmd_dth },
 
 #if OPT_SYNCHPROBS
 	/* in-kernel synchronization problem(s) */
