@@ -430,13 +430,14 @@ static const char *opsmenu[] = {
 	"[p]       Other program             ",
 	"[mount]   Mount a filesystem        ",
 	"[unmount] Unmount a filesystem      ",
-	"[bootfs]  Set \"boot\" filesystem     ",
+	"[bootfs]  Set \"boot\" filesystem   ",
 	"[pf]      Print a file              ",
 	"[cd]      Change directory          ",
 	"[pwd]     Print current directory   ",
 	"[sync]    Sync filesystems          ",
 	"[panic]   Intentional panic         ",
 	"[q]       Quit and shut down        ",
+	"[dth]     Initiate debug threads    ",
 	NULL
 };
 
