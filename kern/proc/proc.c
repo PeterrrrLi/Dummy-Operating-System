@@ -49,7 +49,8 @@
 #include <vnode.h>
 #include <vfs.h>
 #include <synch.h>
-#include <kern/fcntl.h>  
+#include <kern/fcntl.h>
+#include "opt-A2.h"
 
 /*
  * The process for the kernel; this holds all the kernel-only threads.
@@ -69,7 +70,11 @@ static struct semaphore *proc_count_mutex;
 struct semaphore *no_proc_sem;   
 #endif  // UW
 
-
+#ifdef OPT_A2
+volatile int pid_counter = 3;
+struct lock *pid_counter_lock;
+struct lock *proc_exit_lock;
+#endif
 
 /*
  * Create a proc structure.
@@ -103,6 +108,15 @@ proc_create(const char *name)
 	proc->console = NULL;
 #endif // UW
 
+#if OPT_A2
+	proc->child_lock = lock_create("Child Lock");
+	proc->child_cv = cv_create("Child CV");
+	proc->dead = false;
+	proc->pid = 2;
+	proc->parent = NULL;
+	proc->child = array_create();
+	array_init(proc->child);
+#endif
 	return proc;
 }
 
@@ -197,6 +211,12 @@ proc_bootstrap(void)
   if (kproc == NULL) {
     panic("proc_create for kproc failed\n");
   }
+
+#ifdef OPT_A2
+	pid_counter_lock = lock_create("pid_counter_lock");
+	proc_exit_lock = lock_create("proc_exit_lock");
+#endif
+
 #ifdef UW
   proc_count = 0;
   proc_count_mutex = sem_create("proc_count_mutex",1);
@@ -271,6 +291,23 @@ proc_create_runprogram(const char *name)
 	V(proc_count_mutex);
 #endif // UW
 
+#ifdef OPT_A2
+
+	proc->child_lock = lock_create("Child Lock"); 
+	proc->child_cv = cv_create("Child CV");
+	proc->parent = NULL;
+	proc->dead = false;
+	array_add(kproc->child, proc, NULL);
+	proc->child = array_create();
+	array_init(proc->child);
+	proc->proc_lock = lock_create("Proc Lock");
+
+	lock_acquire(pid_counter_lock);
+	pid_counter++;
+	proc->pid = pid_counter;
+	lock_release(pid_counter_lock);
+	
+#endif
 	return proc;
 }
 

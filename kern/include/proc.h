@@ -69,7 +69,20 @@ struct proc {
 #endif
 
 	/* add more material here as needed */
+	  pid_t pid;
+    struct proc *parent;
+    struct array *child;
+    struct lock *child_lock;
+    struct lock *proc_lock;
+    struct cv *child_cv;
+    int exitstatus;
+    int exitcode;
+    bool dead;
 };
+
+extern volatile int pid_counter;
+extern struct lock *pid_counter_lock;
+extern struct lock *proc_exit_lock;
 
 /* This is the process structure for the kernel and for kernel-only threads. */
 extern struct proc *kproc;
