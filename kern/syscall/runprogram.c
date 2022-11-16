@@ -44,6 +44,8 @@
 #include <vfs.h>
 #include <syscall.h>
 #include <test.h>
+#include <copyinout.h>
+#include "opt-A2.h"
 
 /*
  * Load program "progname" and start running it in usermode.
@@ -51,8 +53,13 @@
  *
  * Calls vfs_open on progname and thus may destroy it.
  */
+
+#if OPT_A2
 int
+runprogram(char *progname, char **args)
+#else
 runprogram(char *progname)
+#endif
 {
 	struct addrspace *as;
 	struct vnode *v;
@@ -97,10 +104,45 @@ runprogram(char *progname)
 		return result;
 	}
 
+	#if OPT_A2
+
+	/* Number of arguments in the NULL terminated args list */
+	int argc = 0;
+    while (args[argc] != NULL) {
+        argc++;
+    }
+
+    vaddr_t args_ptr[argc + 1];
+    for (int i = argc - 1; i >= 0; i--) {
+        stackptr -= strlen(args[i]) + 1;
+        result = copyoutstr(args[i], (userptr_t)stackptr, strlen(args[i]) + 1, NULL);
+        if(result) {
+            return result;
+        }
+        args_ptr[i] = stackptr;
+	} // 把用argvptr改为用stack pointer
+    args_ptr[argc] = 0;
+
+    stackptr = ROUNDUP(stackptr - 8, 8);
+    stackptr -= ROUNDUP((argc + 1)*sizeof(char *), 8);
+    vaddr_t argvptr = stackptr;
+    for (int i = 0; i <= argc; i++) {
+        result = copyout(&args_ptr[i], (userptr_t)argvptr, sizeof(vaddr_t));
+        if(result) {
+            return result;
+        }
+        argvptr += sizeof(char *);
+    }
+
+	enter_new_process(argc, (userptr_t)stackptr, stackptr, entrypoint);
+
+	#else
+
 	/* Warp to user mode. */
 	enter_new_process(0 /*argc*/, NULL /*userspace addr of argv*/,
 			  stackptr, entrypoint);
 	
+	#endif
 	/* enter_new_process does not return. */
 	panic("enter_new_process returned\n");
 	return EINVAL;
