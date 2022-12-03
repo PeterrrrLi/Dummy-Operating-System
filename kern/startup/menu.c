@@ -100,18 +100,18 @@ cmd_progthread(void *ptr, unsigned long nargs)
 	strcpy(progname, args[0]);
 
 	#if OPT_A2
-		// char *args_p[nargs + 1];
+		char *args_p[nargs + 1];
 
-		// for (unsigned i = 0; i <= nargs; i++) {
-		// 	if (i == nargs) {
-		// 		args_p[i] = NULL;
-		// 	}
-		// 	else {
-		// 		args_p[i] = args[i];
-		// 	}
-		// } // 试试可不可以不用args_p，直接给args！！！！！
+		for (unsigned i = 0; i <= nargs; i++) {
+			if (i == nargs) {
+				args_p[i] = NULL;
+			}
+			else {
+				args_p[i] = args[i];
+			}
+		} // 试试可不可以不用args_p，直接给args！！！！！
 
-		result = runprogram(progname, args);
+		result = runprogram(progname, args_p);
 	#else
 		result = runprogram(progname);
 	#endif
