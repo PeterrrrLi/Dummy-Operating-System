@@ -83,7 +83,7 @@ runprogram(char *progname)
 	}
 
 	/* Switch to it and activate it. */
-	curproc_setas(as);
+	curproc_setas(as); //////////////////////  这个时候args就没了！！！！！！！！！！！！！！！！！！！！！！！！！！！！
 	as_activate();
 
 	/* Load the executable. */
@@ -112,27 +112,26 @@ runprogram(char *progname)
         argc++;
     }
 
-    vaddr_t args_ptr[argc + 1];
-    for (int i = argc - 1; i >= 0; i--) {
-        stackptr -= strlen(args[i]) + 1;
-        result = copyoutstr(args[i], (userptr_t)stackptr, strlen(args[i]) + 1, NULL);
-        if(result) {
-            return result;
-        }
-        args_ptr[i] = stackptr;
-	} // 把用argvptr改为用stack pointer
-    args_ptr[argc] = 0;
+	vaddr_t args_kernel[argc + 1];
 
-    stackptr = ROUNDUP(stackptr - 8, 8);
-    stackptr -= ROUNDUP((argc + 1)*sizeof(char *), 8);
-    vaddr_t argvptr = stackptr;
-    for (int i = 0; i <= argc; i++) {
-        result = copyout(&args_ptr[i], (userptr_t)argvptr, sizeof(vaddr_t));
-        if(result) {
-            return result;
-        }
-        argvptr += sizeof(char *);
-    }
+	for (int i = argc; i >= 0; i--) {
+		if (i == argc) {
+			args_kernel[i] = 0;
+		}
+		else {
+			stackptr -= strlen(args[i]) + 1; 
+			copyoutstr(args[i], (userptr_t)stackptr, strlen(args[i])+1, NULL);
+			args_kernel[i] = stackptr;
+		}
+	} // 应该只用stack pointer来decrement，然后直接return and pass into user mode
+	
+
+	stackptr = ROUNDUP(stackptr - 8, 8); 
+
+	for (int i = argc; i >= 0; i--) {
+		stackptr -= sizeof(char *);
+		copyout(&args_kernel[i], (userptr_t)stackptr, sizeof(vaddr_t));\
+	}
 
 	enter_new_process(argc, (userptr_t)stackptr, stackptr, entrypoint);
 

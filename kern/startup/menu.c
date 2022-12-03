@@ -93,12 +93,6 @@ cmd_progthread(void *ptr, unsigned long nargs)
 	int result;
 
 	KASSERT(nargs >= 1);
-	#if OPT_A2
-	#else
-	if (nargs > 2) {
-		kprintf("Warning: argument passing from menu not supported\n");
-	}
-	#endif
 
 	/* Hope we fit. */
 	KASSERT(strlen(args[0]) < sizeof(progname));
@@ -106,12 +100,18 @@ cmd_progthread(void *ptr, unsigned long nargs)
 	strcpy(progname, args[0]);
 
 	#if OPT_A2
-		char *argv[nargs + 1];
-		for (unsigned int i = 0; i < nargs; i++) {
-			argv[i] = args[i];
-		}
-		argv[nargs] = NULL;
-		result = runprogram(progname, argv);
+		// char *args_p[nargs + 1];
+
+		// for (unsigned i = 0; i <= nargs; i++) {
+		// 	if (i == nargs) {
+		// 		args_p[i] = NULL;
+		// 	}
+		// 	else {
+		// 		args_p[i] = args[i];
+		// 	}
+		// } // 试试可不可以不用args_p，直接给args！！！！！
+
+		result = runprogram(progname, args);
 	#else
 		result = runprogram(progname);
 	#endif

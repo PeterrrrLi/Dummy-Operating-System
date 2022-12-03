@@ -192,6 +192,19 @@ sys_execv(char *progname, char **args)
 		return result;
 	}
 	
+  int argc = 0;
+  while (args[argc] != NULL) {
+    argc++;
+  }
+  
+  // !!!
+  char **args_p = kmalloc(sizeof(char *) * argc);
+  for (int i = 0; i < argc; i++) {
+    int arg_size = strlen((char *)args[i]) + 1;
+    args_p[i] = kmalloc(arg_size * sizeof(char));
+    copyinstr((const_userptr_t)args[i], args_p[i], arg_size, NULL);
+  }
+
 	/* Open the file. */
 	result = vfs_open(progname, O_RDONLY, 0, &v);
 	if (result) {
@@ -227,9 +240,28 @@ sys_execv(char *progname, char **args)
 		return result;
 	}
 
-	/* Warp to user mode. */
-	enter_new_process(0 /*argc*/, NULL /*userspace addr of argv*/,
-			  stackptr, entrypoint);
+	vaddr_t args_kernel[argc + 1];
+
+	for (int i = argc; i >= 0; i--) {
+		if (i == argc) {
+			args_kernel[i] = 0;
+		}
+		else {
+			stackptr -= strlen(args_p[i]) + 1; 
+			copyoutstr(args_p[i], (userptr_t)stackptr, strlen(args_p[i])+1, NULL);
+			args_kernel[i] = stackptr;
+		}
+	} // 应该只用stack pointer来decrement，然后直接return and pass into user mode
+	
+
+	stackptr = ROUNDUP(stackptr - 8, 8); 
+
+	for (int i = argc; i >= 0; i--) {
+		stackptr -= sizeof(char *);
+		copyout(&args_kernel[i], (userptr_t)stackptr, sizeof(vaddr_t));\
+	}
+
+	enter_new_process(argc, (userptr_t)stackptr, stackptr, entrypoint);
 	
 	/* enter_new_process does not return. */
 	panic("enter_new_process returned\n");
