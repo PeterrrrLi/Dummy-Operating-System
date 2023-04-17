@@ -14,6 +14,7 @@
 #include <machine/trapframe.h>
 #include <synch.h>
 #include "opt-A2.h"
+#include "opt-A3.h"
   /* this implementation of sys__exit does not do anything with the exit code */
   /* this needs to be fixed to get exit() and waitpid() working properly */
 
@@ -35,6 +36,12 @@ void sys__exit(int exitcode) {
   }
   p->exitstatus = _MKWAIT_EXIT(exitcode);
   p->exitcode = exitcode;
+#endif
+#if OPT_A3
+  if (exitcode < 0) {
+    p->exitstatus = _MKWAIT_SIG(exitcode * -1); 
+    p->exitcode = exitcode * -1;
+  }
 #endif
   /* for now, just include this to keep the compiler from complaining about
      an unused variable */

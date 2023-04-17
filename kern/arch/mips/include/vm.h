@@ -29,6 +29,7 @@
 
 #ifndef _MIPS_VM_H_
 #define _MIPS_VM_H_
+#include "opt-A3.h"
 
 
 /*
@@ -67,6 +68,10 @@
  */
 #define PADDR_TO_KVADDR(paddr) ((paddr)+MIPS_KSEG0)
 
+#if OPT_A3
+#define KVADDR_TO_PADDR(vaddr) ((vaddr)-MIPS_KSEG0)
+#endif
+
 /*
  * The top of user space. (Actually, the address immediately above the
  * last valid user address.)
@@ -100,6 +105,7 @@
 
 void ram_bootstrap(void);
 paddr_t ram_stealmem(unsigned long npages);
+paddr_t getmem(unsigned long npages);
 void ram_getsize(paddr_t *lo, paddr_t *hi);
 
 /*
