@@ -1,4 +1,4 @@
-## CS350
+## CS350 - My First Journey about Operating Systems
 This is the repo for my past-done CS350 assignment. 
 
 I implemented Mutex, Virtual Memory, and others, in OS161. 
